@@ -1,0 +1,15 @@
+{
+  "id": "your-id/MDS5210-project",
+  "title": "MDS5210 Final Project",
+  "code_file": "./main.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": "true",
+  "enable_gpu": "true",
+  "enable_tpu": "false",
+  "enable_internet": "true",
+  "dataset_sources": ["your-id/nanogpt-code"],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}
