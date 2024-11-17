@@ -224,6 +224,23 @@ if init_from == 'resume':
     optimizer.load_state_dict(checkpoint['optimizer'])
 checkpoint = None # free up memory
 
+from badam import BlockOptimizer
+block_prefix_list = []
+for i in range(12):
+    layer_prefix = [
+        [f"transformer.h.{i}."],
+    ]
+    block_prefix_list.extend(layer_prefix)
+
+optimizer = BlockOptimizer(
+    base_optimizer=optimizer,
+    named_parameters_list=list(model.named_parameters()), 
+    switch_block_every=100,
+    switch_mode="random",
+    verbose=2,
+    block_prefix_list=block_prefix_list # set the block list
+)
+
 # compile the model
 if compile:
     print("compiling the model... (takes a ~minute)")

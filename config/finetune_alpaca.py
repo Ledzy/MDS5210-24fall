@@ -2,7 +2,7 @@ import pickle
 import time
 
 out_dir = 'out-instruction-tuning'
-eval_interval = 100 # adjust it to your need
+eval_interval = 50
 eval_iters = 40
 wandb_log = False # feel free to turn on
 wandb_project = 'instruction-tuning'
@@ -15,6 +15,8 @@ init_from = 'gpt2' # this is the largest GPT-2 model
 always_save_checkpoint = False
 
 # the number of examples per iter:
+# 1 batch_size * 32 grad_accum * 1024 tokens = 32,768 tokens/iter
+# shakespeare has 301,966 tokens, so 1 epoch ~= 9.2 iters
 batch_size = 5
 gradient_accumulation_steps = 2
 max_iters = 5000
@@ -27,23 +29,26 @@ decay_lr = False
 train_samples = pickle.load(open("data/instruction_tuning/train.pkl", "rb"))
 val_samples = pickle.load(open("data/instruction_tuning/val.pkl", "rb"))
 END_TOKEN = 50256 # GPT-2's token for "<|endoftext|>"
+PAD_TOKEN = -1
 
-# experiment setting for part 2
-dtype = "float32" # float32, float16, bfloat16. Note that bfloat16 is not supported by P100 and some old GPUs.
-optimization_method = "adam" # adam, sgd, (lora or badam)
 
 def get_batch_for_IT(split):
-    """i.i.d. sample a batch of data, pad the batch into the same length for instruction tuning
-    The pad token is suggested to be END_TOKEN defined above, which is the default choice for GPT-2 model series.
-    
-    Return:
-        x: torch.tensor, shape=(batch_size, block_size)
-        y: torch.tensor, shifted x, shape=(batch_size, block_size)
-    """
+    """get batch data for instruction tuning"""
     samples = train_samples if split == 'train' else val_samples
+    ix = torch.randint(len(samples), (batch_size,))
+    batch = [samples[i] for i in ix]
     
-    # TODO:
-    pass
+    # pad the samples to the same length
+    max_len = max([len(x) for x in batch])
+    for i in range(len(batch)):
+        batch[i] += [END_TOKEN] * (max_len - len(batch[i]))
+        
+    batch = torch.tensor(batch, dtype=torch.long).to(device)
+    batch = batch[:, :block_size] # crop to block size
+    x = batch[:, :-1].contiguous()
+    y = batch[:, 1:].contiguous()
+    return x, y
+
 
 def query_memory():
     """Query the memory usage of the GPU"""
