@@ -29,11 +29,10 @@ from torch.distributed import init_process_group, destroy_process_group
 
 from model import GPTConfig, GPT
 
-# Avoid GPU version conflict (For Kaggle GPU only). Comment below two lines if you use local machine in order to speed up training.
-import torch._dynamo.config
-torch._dynamo.config.suppress_errors = True
+# # Avoid GPU version conflict (For Kaggle GPU only). Comment below two lines if you use local machine in order to speed up training.
+# import torch._dynamo.config
+# torch._dynamo.config.suppress_errors = True
 
-student_id = 123456 # change to your student id
 
 # -----------------------------------------------------------------------------
 # default config values designed to train a gpt2 (124M) on OpenWebText
@@ -109,7 +108,6 @@ print(f"tokens per iteration will be: {tokens_per_iter:,}")
 
 if master_process:
     os.makedirs(out_dir, exist_ok=True)
-torch.manual_seed(student_id + seed_offset)
 torch.backends.cuda.matmul.allow_tf32 = True # allow tf32 on matmul
 torch.backends.cudnn.allow_tf32 = True # allow tf32 on cudnn
 device_type = 'cuda' if 'cuda' in device else 'cpu' # for later use in torch.autocast
@@ -136,6 +134,7 @@ def get_batch(split):
         x, y = x.to(device), y.to(device)
     return x, y
 
+get_batch = get_batch_for_IT if dataset == 'alpaca-gpt4' else get_batch
 # init these up here, can override if init_from='resume' (i.e. from a checkpoint)
 iter_num = 0
 best_val_loss = 1e9
@@ -198,11 +197,29 @@ if block_size < model.config.block_size:
     model_args['block_size'] = block_size # so that the checkpoint will have the right value
 model.to(device)
 
+# by default, GPT-2 is loaded in float32
+if dtype == 'float16':
+    model = model.half()
+    print("downcasting model to fp16")
+
 # initialize a GradScaler. If enabled=False scaler is a no-op
 scaler = torch.cuda.amp.GradScaler(enabled=(dtype == 'float16'))
 
 # optimizer
-optimizer = model.configure_optimizers(weight_decay, learning_rate, (beta1, beta2), device_type)
+if optimization_method == "adam":
+    optimizer = model.configure_optimizers(weight_decay, learning_rate, (beta1, beta2), device_type)
+elif optimization_method == "sgd":
+    # TODO: implement it in model.py, similar to the configure_optimizers function
+    raise NotImplementedError("SGD optimizer is not implemented yet.")
+elif optimization_method == "lora":
+    # TODO implement LoRA. You may need to change the linear layers in model.py to LoRA layers.
+    # reference: https://github.com/microsoft/LoRA
+    raise NotImplementedError("LoRA is not implemented yet.")
+elif optimization_method == "badam":
+    # TODO implement BAdam.
+    # reference: https://github.com/Ledzy/BAdam
+    raise NotImplementedError("BAdam is not implemented yet.")
+
 if init_from == 'resume':
     optimizer.load_state_dict(checkpoint['optimizer'])
 checkpoint = None # free up memory

@@ -7,7 +7,7 @@ The file contains scripts for uploading your code to Kaggle to train. Best open 
 **This file is mainly written for groups who does not have enough computational resources, instructing them how to use the GPU resource offered by Kaggle platform.** If you already have a machine with powerful GPU (with at least 15G GPU RAM), you don't need to read this file.
 > To check your GPU utility, run `nvidia-smi` in the terminal.
 
-After finishing your code, run the following commands in your terminal line-by-line **under the parent folder of `src` directory** (the `MDS5210-24Fall` folder by default). The code will be uploaded to Kaggle platform to be executed. For more information about the meaning of the kaggle API, see https://www.kaggle.com/docs/api#getting-started-installation-&-authentication.
+After finishing your code, run the following commands in your terminal line-by-line **under the `MDS5210-24Fall` folder** . The code will be uploaded to Kaggle platform to be executed. For more information about the meaning of the kaggle API, see https://www.kaggle.com/docs/api#getting-started-installation-&-authentication.
 
 **Basic workflow:** 
 
