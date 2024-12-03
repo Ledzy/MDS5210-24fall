@@ -277,7 +277,7 @@ def compare_two_list(pred, gt):
 
 dataset = 'gsm8k' # options: 'gsm8k' 'math' 'svamp' 'simuleq' 'numglue'
 template = "### Instruction:\n{}\n\n### Response:{}\n\n"
-num_samples = 10
+num_samples = -1
 model_name = "meta-llama/Llama-3.2-3B"
 
 inference_dtype = "bfloat16" if torch.cuda.is_bf16_supported() else "float32"
